@@ -12,62 +12,38 @@ export default function CartDrawer({ open, onClose }) {
   const [phone, setPhone] = useState('');
   const items = Object.values(cart);
 
-  const sendOrder = async () => {
+  const sendOrder = () => {
     if (!name.trim()) return toast.error('الرجاء إدخال اسمك');
     if (!address.trim()) return toast.error('الرجاء إدخال عنوان التوصيل');
     if (items.length === 0) return toast.error('السلة فارغة');
 
-    try {
-      await API.post('/orders', {
-        customerName: name, customerAddress: address, customerPhone: phone,
-        items: items.map(i => ({ product: i._id, name: i.name, price: i.price, qty: i.qty, emoji: i.emoji })),
-        total: cartTotal,
-      });
+    let msg = `🛒 *طلب جديد - سوبر ماركت التوفير*\n\n`;
+    msg += `👤 *الاسم:* ${name}\n📍 *العنوان:* ${address}\n`;
+    if (phone) msg += `📞 *الهاتف:* ${phone}\n`;
+    msg += `\n*المنتجات:*\n`;
+    items.forEach(i => { msg += `${i.emoji} ${i.name} × ${i.qty} = ${(i.price * i.qty).toFixed(1)} ₪\n`; });
+    msg += `\n💰 *المجموع: ${cartTotal.toFixed(1)} ₪*\nشكراً لطلبكم! 🙏`;
 
-      let msg = `🛒 *طلب جديد - سوبر ماركت التوفير*\n\n`;
-      msg += `👤 *الاسم:* ${name}\n📍 *العنوان:* ${address}\n`;
-      if (phone) msg += `📞 *الهاتف:* ${phone}\n`;
-      msg += `\n*المنتجات:*\n`;
-      items.forEach(i => { msg += `${i.emoji} ${i.name} × ${i.qty} = ${(i.price * i.qty).toFixed(1)} ₪\n`; });
-      msg += `\n💰 *المجموع: ${cartTotal.toFixed(1)} ₪*\nشكراً لطلبكم! 🙏`;
+    const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
 
-      // window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-      const sendOrder = async () => {
-  if (!name.trim()) return toast.error('الرجاء إدخال اسمك');
-  if (!address.trim()) return toast.error('الرجاء إدخال عنوان التوصيل');
-  if (items.length === 0) return toast.error('السلة فارغة');
+    // فتح واتساب أولاً — مهم لـ iOS
+    window.location.href = url;
 
-  let msg = `🛒 *طلب جديد - سوبر ماركت التوفير*\n\n`;
-  msg += `👤 *الاسم:* ${name}\n📍 *العنوان:* ${address}\n`;
-  if (phone) msg += `📞 *الهاتف:* ${phone}\n`;
-  msg += `\n*المنتجات:*\n`;
-  items.forEach(i => { msg += `${i.emoji} ${i.name} × ${i.qty} = ${(i.price * i.qty).toFixed(1)} ₪\n`; });
-  msg += `\n💰 *المجموع: ${cartTotal.toFixed(1)} ₪*\nشكراً لطلبكم! 🙏`;
-
-  const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
-
-  // فتح واتساب أولاً قبل أي async operation
-  const win = window.open(url, '_blank');
-
-  try {
-    await API.post('/orders', {
-      customerName: name, customerAddress: address, customerPhone: phone,
+    // حفظ الطلب في الخلفية
+    API.post('/orders', {
+      customerName: name,
+      customerAddress: address,
+      customerPhone: phone,
       items: items.map(i => ({ product: i._id, name: i.name, price: i.price, qty: i.qty, emoji: i.emoji })),
       total: cartTotal,
-    });
-    clearCart(); setName(''); setAddress(''); setPhone('');
+    }).catch(() => {});
+
+    clearCart();
+    setName('');
+    setAddress('');
+    setPhone('');
     onClose();
     toast.success('✅ تم إرسال طلبك!');
-  } catch {
-    toast.error('حدث خطأ في حفظ الطلب');
-  }
-};
-      clearCart(); setName(''); setAddress(''); setPhone('');
-      onClose();
-      toast.success('✅ تم إرسال طلبك!');
-    } catch {
-      toast.error('حدث خطأ، حاول مجدداً');
-    }
   };
 
   if (!open) return null;
@@ -104,7 +80,11 @@ export default function CartDrawer({ open, onClose }) {
               <span style={{ fontSize: 22, fontWeight: 900, color: '#1a6b3a' }}>{cartTotal.toFixed(1)} ₪</span>
             </div>
 
-            {[['اسمك الكريم *', name, setName, 'text', 'محمد أحمد'], ['عنوان التوصيل *', address, setAddress, 'text', 'شارع الزهور، بناية 5'], ['رقم هاتفك', phone, setPhone, 'tel', '05xxxxxxxx']].map(([label, val, setter, type, ph]) => (
+            {[
+              ['اسمك الكريم *', name, setName, 'text', 'محمد أحمد'],
+              ['عنوان التوصيل *', address, setAddress, 'text', 'شارع الزهور، بناية 5'],
+              ['رقم هاتفك', phone, setPhone, 'tel', '05xxxxxxxx']
+            ].map(([label, val, setter, type, ph]) => (
               <div key={label} style={{ marginBottom: 12 }}>
                 <label style={{ fontSize: 13, fontWeight: 700, color: '#6b7280', display: 'block', marginBottom: 6 }}>{label}</label>
                 <input type={type} value={val} onChange={e => setter(e.target.value)} placeholder={ph}
