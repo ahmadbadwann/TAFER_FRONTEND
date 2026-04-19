@@ -77,7 +77,12 @@ export default function Store() {
               <div key={p._id} style={{ background: 'white', borderRadius: 16, border: '1px solid #e5e7eb', overflow: 'hidden', transition: 'transform 0.2s' }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-3px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
-                <div style={{ height: 120, background: '#e8f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 52 }}>{p.emoji}</div>
+                <div style={{ height: 120, background: '#e8f5ee', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 52, overflow: 'hidden' }}>
+  {p.image && p.image.startsWith('http')
+    ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+    : <span>{p.emoji}</span>
+  }
+</div>
                 <div style={{ padding: '10px 12px' }}>
                   <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3 }}>{p.name}</div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 8 }}>{p.unit}</div>
