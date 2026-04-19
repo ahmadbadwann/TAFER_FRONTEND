@@ -31,7 +31,37 @@ export default function CartDrawer({ open, onClose }) {
       items.forEach(i => { msg += `${i.emoji} ${i.name} × ${i.qty} = ${(i.price * i.qty).toFixed(1)} ₪\n`; });
       msg += `\n💰 *المجموع: ${cartTotal.toFixed(1)} ₪*\nشكراً لطلبكم! 🙏`;
 
-      window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+      // window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
+      const sendOrder = async () => {
+  if (!name.trim()) return toast.error('الرجاء إدخال اسمك');
+  if (!address.trim()) return toast.error('الرجاء إدخال عنوان التوصيل');
+  if (items.length === 0) return toast.error('السلة فارغة');
+
+  let msg = `🛒 *طلب جديد - سوبر ماركت التوفير*\n\n`;
+  msg += `👤 *الاسم:* ${name}\n📍 *العنوان:* ${address}\n`;
+  if (phone) msg += `📞 *الهاتف:* ${phone}\n`;
+  msg += `\n*المنتجات:*\n`;
+  items.forEach(i => { msg += `${i.emoji} ${i.name} × ${i.qty} = ${(i.price * i.qty).toFixed(1)} ₪\n`; });
+  msg += `\n💰 *المجموع: ${cartTotal.toFixed(1)} ₪*\nشكراً لطلبكم! 🙏`;
+
+  const url = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
+
+  // فتح واتساب أولاً قبل أي async operation
+  const win = window.open(url, '_blank');
+
+  try {
+    await API.post('/orders', {
+      customerName: name, customerAddress: address, customerPhone: phone,
+      items: items.map(i => ({ product: i._id, name: i.name, price: i.price, qty: i.qty, emoji: i.emoji })),
+      total: cartTotal,
+    });
+    clearCart(); setName(''); setAddress(''); setPhone('');
+    onClose();
+    toast.success('✅ تم إرسال طلبك!');
+  } catch {
+    toast.error('حدث خطأ في حفظ الطلب');
+  }
+};
       clearCart(); setName(''); setAddress(''); setPhone('');
       onClose();
       toast.success('✅ تم إرسال طلبك!');
